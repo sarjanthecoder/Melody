@@ -92,7 +92,7 @@ const SongItem = React.memo(function SongItem({ song, onPress, queue, index, sho
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
