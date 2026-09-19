@@ -28,24 +28,54 @@ export default function NowPlayingScreen({ navigation }) {
 
   const [showQueue, setShowQueue] = useState(false);
   const [seeking, setSeeking] = useState(false);
-  const [seekValue, setSeekValue] = useState(0);
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const sliderRef = useRef(null);
+  const [seekRatio, setSeekRatio] = useState(null);
+  const trackRef = useRef(null);
+  const trackWidthRef = useRef(SCREEN_W - SPACING.xl * 2);
+  const trackPageXRef = useRef(SPACING.xl);
 
   const isFav = currentSong ? favorites.includes(currentSong.id) : false;
-  const progress = duration > 0 ? position / duration : 0;
+  const currentRatio = seeking && seekRatio !== null ? seekRatio : (duration > 0 ? position / duration : 0);
+  const displayedPosition = seeking && seekRatio !== null ? seekRatio * duration : position;
 
-  useEffect(() => {
-    if (!seeking) {
-      progressAnim.setValue(progress);
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt) => {
+        setSeeking(true);
+        measureTrack();
+        const touchX = evt.nativeEvent.pageX;
+        const ratio = Math.max(0, Math.min(1, (touchX - trackPageXRef.current) / (trackWidthRef.current || 1)));
+        setSeekRatio(ratio);
+      },
+      onPanResponderMove: (evt) => {
+        const touchX = evt.nativeEvent.pageX;
+        const ratio = Math.max(0, Math.min(1, (touchX - trackPageXRef.current) / (trackWidthRef.current || 1)));
+        setSeekRatio(ratio);
+      },
+      onPanResponderRelease: (evt) => {
+        const touchX = evt.nativeEvent.pageX;
+        const ratio = Math.max(0, Math.min(1, (touchX - trackPageXRef.current) / (trackWidthRef.current || 1)));
+        setSeeking(false);
+        setSeekRatio(null);
+        if (duration > 0) {
+          seekTo(ratio * duration);
+        }
+      },
+      onPanResponderTerminate: () => {
+        setSeeking(false);
+        setSeekRatio(null);
+      },
+    })
+  ).current;
+
+  function measureTrack() {
+    if (trackRef.current?.measure) {
+      trackRef.current.measure((x, y, width, height, pageX) => {
+        if (width > 0) trackWidthRef.current = width;
+        if (pageX !== undefined) trackPageXRef.current = pageX;
+      });
     }
-  }, [progress, seeking]);
-
-  function handleSliderPress(event) {
-    const { locationX } = event.nativeEvent;
-    const sliderWidth = SCREEN_W - SPACING.xxxl * 2;
-    const ratio = Math.max(0, Math.min(1, locationX / sliderWidth));
-    seekTo(ratio * duration);
   }
 
   const upNext = queue.slice(currentIndex + 1, currentIndex + 6);
@@ -116,19 +146,19 @@ export default function NowPlayingScreen({ navigation }) {
 
           {/* Progress slider */}
           <View style={styles.progressSection}>
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={handleSliderPress}
+            <View
               style={styles.sliderTrack}
-              ref={sliderRef}
+              ref={trackRef}
+              onLayout={measureTrack}
+              {...panResponder.panHandlers}
             >
               <View style={styles.sliderBg}>
-                <View style={[styles.sliderFill, { width: `${progress * 100}%` }]} />
-                <View style={[styles.sliderThumb, { left: `${progress * 100}%` }]} />
+                <View style={[styles.sliderFill, { width: `${Math.min(100, Math.max(0, currentRatio * 100))}%` }]} />
+                <View style={[styles.sliderThumb, { left: `${Math.min(100, Math.max(0, currentRatio * 100))}%` }]} />
               </View>
-            </TouchableOpacity>
+            </View>
             <View style={styles.timeRow}>
-              <Text style={styles.timeText}>{formatTime(position)}</Text>
+              <Text style={styles.timeText}>{formatTime(displayedPosition)}</Text>
               <Text style={styles.timeText}>{formatTime(duration)}</Text>
             </View>
           </View>

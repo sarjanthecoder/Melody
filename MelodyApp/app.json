@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#05070D",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#05070D"
-    },
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
@@ -61,7 +56,8 @@
           "savePhotosPermission": "Allow Melody to save music.",
           "isAccessMediaLocationEnabled": true
         }
-      ]
+      ],
+      "expo-splash-screen"
     ],
     "extra": {
       "eas": {

@@ -2075,6 +2075,7 @@
     let currentSong = null;
     let isPlaying = false;
     let currentSeconds = 0;
+    let isDraggingScrubber = false;
     let currentFilterTab = 'all';
     let favorites = new Set(['song_01', 'song_04', 'song_06']);
     const audioEl = new Audio();
@@ -2564,8 +2565,6 @@
     }
 
     // Interactive Dragging & Clicking Scrubber
-    let isDraggingScrubber = false;
-
     function updateScrubberVisual(ratio) {
       if (!currentSong) return;
       const total = (currentSong.time && currentSong.time > 0) ? currentSong.time : 240;

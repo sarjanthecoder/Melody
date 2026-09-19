@@ -7,22 +7,27 @@ import { COLORS, SPACING, RADIUS, FONTS } from '../constants/theme';
 
 export default function MiniPlayer() {
   const navigation = useNavigation();
-  const { currentSong, isPlaying, togglePlay, playNext } = usePlayer();
+  const { currentSong, isPlaying, position, duration, togglePlay, playNext } = usePlayer();
 
   if (!currentSong) return null;
 
+  const progressPct = duration > 0 ? Math.min(100, Math.max(0, (position / duration) * 100)) : 0;
+
   return (
-    <TouchableOpacity
-      activeOpacity={0.95}
-      onPress={() => navigation.navigate('NowPlaying')}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <View style={styles.inner}>
-        <ArtworkPlaceholder song={currentSong} size={42} style={styles.artwork} />
-        <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
-          <Text style={styles.artist} numberOfLines={1}>{currentSong.artist}</Text>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('NowPlaying')}
+          style={styles.touchArea}
+        >
+          <ArtworkPlaceholder song={currentSong} size={42} style={styles.artwork} />
+          <View style={styles.info}>
+            <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
+            <Text style={styles.artist} numberOfLines={1}>{currentSong.artist}</Text>
+          </View>
+        </TouchableOpacity>
+
         <View style={styles.controls}>
           <TouchableOpacity
             onPress={togglePlay}
@@ -41,9 +46,9 @@ export default function MiniPlayer() {
         </View>
       </View>
       <View style={styles.progressBar}>
-        <View style={[styles.progressFill, { width: '35%' }]} />
+        <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -71,6 +76,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
+  },
+  touchArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   artwork: { borderRadius: RADIUS.sm, marginRight: SPACING.md },
   info: { flex: 1, marginRight: SPACING.sm },

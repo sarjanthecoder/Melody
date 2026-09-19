@@ -65,7 +65,7 @@ export default function HomeScreen({ navigation }) {
     }
   }
 
-  const ListHeader = () => (
+  const listHeaderElement = useMemo(() => (
     <View>
       {/* Header */}
       <LinearGradient colors={['#0D1220', '#05070D']} style={styles.header}>
@@ -162,7 +162,7 @@ export default function HomeScreen({ navigation }) {
 
       <Text style={styles.songCount}>{filteredSongs.length} songs</Text>
     </View>
-  );
+  ), [search, activeTab, recentSongs, filteredSongs.length, songs]);
 
   return (
     <View style={styles.container}>
@@ -181,7 +181,7 @@ export default function HomeScreen({ navigation }) {
             }}
           />
         )}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={listHeaderElement}
         contentContainerStyle={styles.listContent}
         initialNumToRender={15}
         maxToRenderPerBatch={20}

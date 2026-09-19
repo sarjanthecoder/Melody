@@ -13,7 +13,7 @@ function formatDuration(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function SongItem({ song, onPress, queue, index, showMenu = true }) {
+const SongItem = React.memo(function SongItem({ song, onPress, queue, index, showMenu = true }) {
   const { currentSong, isPlaying, toggleFavorite, favorites, deleteSong, renameSong } = usePlayer();
   const isActive = currentSong?.id === song.id;
   const isFavorite = favorites.includes(song.id);
@@ -138,3 +138,5 @@ const styles = StyleSheet.create({
   moreBtn: { padding: 4 },
   more: { color: COLORS.textSecondary, fontSize: 18, fontWeight: '700' },
 });
+
+export default SongItem;

@@ -238,9 +238,11 @@ export function PlayerProvider({ children }) {
 
   async function playSong(song, queue = null, index = null) {
     try {
-      // Unload current
+      // Safely unload current sound
       if (soundRef.current) {
-        await soundRef.current.unloadAsync();
+        try {
+          await soundRef.current.unloadAsync();
+        } catch (_) {}
         soundRef.current = null;
       }
 
@@ -252,37 +254,50 @@ export function PlayerProvider({ children }) {
       dispatch({ type: 'SET_QUEUE', payload: songQueue });
       dispatch({ type: 'ADD_RECENTLY_PLAYED', payload: song.id });
 
-      // Only play if has URI (imported song)
       if (song.uri) {
+        // Built-in assets use require(...) which returns a numeric ID in React Native
+        // User imported songs use file:// / content:// string URIs
+        const audioSource = typeof song.uri === 'number'
+          ? song.uri
+          : (typeof song.uri === 'string' ? { uri: song.uri } : song.uri);
+
         const { sound } = await Audio.Sound.createAsync(
-          { uri: song.uri },
-          { shouldPlay: true, progressUpdateIntervalMillis: 500 },
+          audioSource,
+          { shouldPlay: true, progressUpdateIntervalMillis: 250 },
           onPlaybackStatusUpdate
         );
         soundRef.current = sound;
         dispatch({ type: 'SET_PLAYING', payload: true });
       } else {
-        // Demo song - simulate playback
+        // Demo fallback
         dispatch({ type: 'SET_PLAYING', payload: true });
         dispatch({ type: 'SET_DURATION', payload: song.duration || 200 });
       }
     } catch (e) {
-      console.log('Play error:', e);
+      console.log('Audio playback error:', e);
     }
   }
 
   async function playCurrentSound() {
-    if (soundRef.current) {
-      await soundRef.current.playAsync();
+    try {
+      if (soundRef.current) {
+        await soundRef.current.playAsync();
+      }
+      dispatch({ type: 'SET_PLAYING', payload: true });
+    } catch (e) {
+      console.log('Play sound error:', e);
     }
-    dispatch({ type: 'SET_PLAYING', payload: true });
   }
 
   async function pauseSong() {
-    if (soundRef.current) {
-      await soundRef.current.pauseAsync();
+    try {
+      if (soundRef.current) {
+        await soundRef.current.pauseAsync();
+      }
+      dispatch({ type: 'SET_PLAYING', payload: false });
+    } catch (e) {
+      console.log('Pause error:', e);
     }
-    dispatch({ type: 'SET_PLAYING', payload: false });
   }
 
   async function togglePlay() {
@@ -319,8 +334,12 @@ export function PlayerProvider({ children }) {
   }
 
   async function seekTo(seconds) {
-    if (soundRef.current) {
-      await soundRef.current.setPositionAsync(seconds * 1000);
+    try {
+      if (soundRef.current) {
+        await soundRef.current.setPositionAsync(Math.floor(seconds * 1000));
+      }
+    } catch (e) {
+      console.log('Seek error:', e);
     }
     dispatch({ type: 'SET_POSITION', payload: seconds });
   }
