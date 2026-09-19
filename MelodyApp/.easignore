@@ -1,0 +1,32 @@
+# EAS Ignore for MelodyApp
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Expo
+.expo/
+**/.expo/
+.bundle/
+**/.bundle/
+
+# Native builds
+android/
+ios/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Ensure songs and assets are included
+!assets/
+!assets/songs/
+!assets/songs/*.mp3
