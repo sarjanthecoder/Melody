@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Melody",
+    "slug": "melody-music-player",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#05070D",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#05070D"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"],
+        "NSMicrophoneUsageDescription": "Melody needs microphone access for audio recording.",
+        "NSDocumentsFolderUsageDescription": "Melody needs access to import music files."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#05070D",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_AUDIO",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
+      "package": "com.melody.musicplayer"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Melody to access the microphone."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Melody to access your music library.",
+          "savePhotosPermission": "Allow Melody to save music.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ]
+  }
+}

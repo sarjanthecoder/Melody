@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Android & Gradle Build Artifacts
+**/build/
+android/app/build/
+android/.gradle/
+**/.gradle/
+*.iml
+.gradle
+
+# Expo & Bundle
+.expo/
+**/.expo/
+.bundle/
+**/.bundle/
+
+# Duplicate audio bundles
+MelodyApp/assets/songs/
+MelodyRN/src/assets/songs/
+MelodyRN/android/app/src/main/assets/songs/
+MelodyRN/android/app/src/main/res/raw/
+
+# Audio files
+*.mp3
+
+# Logs & Debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.claude/
+**/.claude/
+
+# System & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Empty temp folders
+New folder/
