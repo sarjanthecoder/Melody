@@ -44,12 +44,6 @@
     },
     "plugins": [
       [
-        "expo-av",
-        {
-          "microphonePermission": "Allow Melody to access the microphone."
-        }
-      ],
-      [
         "expo-media-library",
         {
           "photosPermission": "Allow Melody to access your music library.",
@@ -57,7 +51,9 @@
           "isAccessMediaLocationEnabled": true
         }
       ],
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-audio",
+      "expo-asset"
     ],
     "extra": {
       "eas": {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useRef, useCallback, useEffect } from 'react';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BUILT_IN_SONGS } from '../constants/builtInSongs';
 
@@ -134,7 +134,8 @@ function playerReducer(state, action) {
 
 export function PlayerProvider({ children }) {
   const [state, dispatch] = useReducer(playerReducer, initialState);
-  const soundRef = useRef(null);
+  const playerRef = useRef(null);
+  const statusSubRef = useRef(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -143,8 +144,13 @@ export function PlayerProvider({ children }) {
     loadPersistedData();
     setupAudio();
     return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
+      if (statusSubRef.current) {
+        statusSubRef.current.remove();
+        statusSubRef.current = null;
+      }
+      if (playerRef.current) {
+        try { playerRef.current.release(); } catch (_) {}
+        playerRef.current = null;
       }
     };
   }, []);
@@ -165,14 +171,11 @@ export function PlayerProvider({ children }) {
 
   async function setupAudio() {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        interruptionModeIOS: 1,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        interruptionModeAndroid: 1,
-        playThroughEarpieceAndroid: false,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        interruptionMode: 'doNotMix',
+        allowsRecording: false,
+        shouldRouteThroughEarpiece: false,
       });
     } catch (e) {
       console.log('Audio setup error:', e);
@@ -215,15 +218,6 @@ export function PlayerProvider({ children }) {
     } catch (e) {}
   }
 
-  const onPlaybackStatusUpdate = useCallback((status) => {
-    if (!status.isLoaded) return;
-    dispatch({ type: 'SET_POSITION', payload: status.positionMillis / 1000 });
-    dispatch({ type: 'SET_DURATION', payload: status.durationMillis ? status.durationMillis / 1000 : 0 });
-    if (status.didJustFinish) {
-      handleSongEnd();
-    }
-  }, []);
-
   async function handleSongEnd() {
     const s = stateRef.current;
     if (s.repeatMode === 'one') {
@@ -238,12 +232,16 @@ export function PlayerProvider({ children }) {
 
   async function playSong(song, queue = null, index = null) {
     try {
-      // Safely unload current sound
-      if (soundRef.current) {
+      if (statusSubRef.current) {
+        statusSubRef.current.remove();
+        statusSubRef.current = null;
+      }
+      if (playerRef.current) {
         try {
-          await soundRef.current.unloadAsync();
+          playerRef.current.pause();
+          playerRef.current.release();
         } catch (_) {}
-        soundRef.current = null;
+        playerRef.current = null;
       }
 
       const s = stateRef.current;
@@ -255,21 +253,27 @@ export function PlayerProvider({ children }) {
       dispatch({ type: 'ADD_RECENTLY_PLAYED', payload: song.id });
 
       if (song.uri) {
-        // Built-in assets use require(...) which returns a numeric ID in React Native
-        // User imported songs use file:// / content:// string URIs
         const audioSource = typeof song.uri === 'number'
           ? song.uri
           : (typeof song.uri === 'string' ? { uri: song.uri } : song.uri);
 
-        const { sound } = await Audio.Sound.createAsync(
-          audioSource,
-          { shouldPlay: true, progressUpdateIntervalMillis: 250 },
-          onPlaybackStatusUpdate
-        );
-        soundRef.current = sound;
+        const player = createAudioPlayer(audioSource, { updateInterval: 250 });
+        playerRef.current = player;
+
+        statusSubRef.current = player.addListener('playbackStatusUpdate', (status) => {
+          if (!status.isLoaded) return;
+          dispatch({ type: 'SET_POSITION', payload: status.currentTime || 0 });
+          if (status.duration && status.duration > 0) {
+            dispatch({ type: 'SET_DURATION', payload: status.duration });
+          }
+          if (status.didJustFinish) {
+            handleSongEnd();
+          }
+        });
+
+        player.play();
         dispatch({ type: 'SET_PLAYING', payload: true });
       } else {
-        // Demo fallback
         dispatch({ type: 'SET_PLAYING', payload: true });
         dispatch({ type: 'SET_DURATION', payload: song.duration || 200 });
       }
@@ -280,8 +284,8 @@ export function PlayerProvider({ children }) {
 
   async function playCurrentSound() {
     try {
-      if (soundRef.current) {
-        await soundRef.current.playAsync();
+      if (playerRef.current) {
+        playerRef.current.play();
       }
       dispatch({ type: 'SET_PLAYING', payload: true });
     } catch (e) {
@@ -291,8 +295,8 @@ export function PlayerProvider({ children }) {
 
   async function pauseSong() {
     try {
-      if (soundRef.current) {
-        await soundRef.current.pauseAsync();
+      if (playerRef.current) {
+        playerRef.current.pause();
       }
       dispatch({ type: 'SET_PLAYING', payload: false });
     } catch (e) {
@@ -335,8 +339,8 @@ export function PlayerProvider({ children }) {
 
   async function seekTo(seconds) {
     try {
-      if (soundRef.current) {
-        await soundRef.current.setPositionAsync(Math.floor(seconds * 1000));
+      if (playerRef.current) {
+        playerRef.current.seekTo(seconds);
       }
     } catch (e) {
       console.log('Seek error:', e);
