@@ -13,6 +13,7 @@ node_modules/
 # Native builds
 android/
 ios/
+dist/
 
 # Logs
 *.log
